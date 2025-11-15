@@ -18,7 +18,7 @@ st.markdown("""
 <style>
     .main-header {
         text-align: center;
-        color: #1f77b4;
+        color: #2c3e50;
         font-size: 2.5em;
         margin-bottom: 30px;
     }
@@ -27,28 +27,42 @@ st.markdown("""
         border-radius: 10px;
         margin: 10px 0;
         border: 2px solid;
+        color: white;
+    }
+    .segment-box h2,
+    .segment-box h3,
+    .segment-box p {
+        color: white;
     }
     .segment-0 {
-        background-color: #e3f2fd;
-        border-color: #2196F3;
+        background-color: #c62828;
+        border-color: #b71c1c;
     }
     .segment-1 {
-        background-color: #fff3e0;
-        border-color: #FF9800;
+        background-color: #d32f2f;
+        border-color: #c62828;
     }
     .segment-2 {
-        background-color: #f3e5f5;
-        border-color: #9C27B0;
+        background-color: #e53935;
+        border-color: #d32f2f;
     }
     .segment-3 {
-        background-color: #e8f5e9;
-        border-color: #4CAF50;
+        background-color: #ef5350;
+        border-color: #e53935;
     }
     .metric-card {
         background-color: #f0f2f6;
         padding: 15px;
         border-radius: 5px;
         margin: 5px 0;
+    }
+    .segment-box h3 {
+        white-space: nowrap;
+        word-break: keep-all;
+    }
+    .segment-box {
+        word-wrap: break-word;
+        overflow-wrap: break-word;
     }
 </style>
 """, unsafe_allow_html=True)
@@ -67,14 +81,14 @@ SEGMENT_DESCRIPTIONS = {
         "price_per_sqm": 29480  # محسوب من avg_price / avg_size_sqm
     },
     1: {
-        "name": "عقارات فاخرة جداً",
-        "name_en": "Ultra-Luxury Estates",
-        "description": "عقارات استثنائية كبيرة الحجم، غالباً ما تكون أراضي أو عقارات تجارية أو عقارات فاخرة جداً",
+        "name": "أراضي وعقارات تجارية كبيرة",
+        "name_en": "Large Land & Commercial Properties",
+        "description": "أراضي وعقارات تجارية كبيرة جداً (متوسط 151,242 م²). السعر لكل متر مربع منخفض نسبياً بسبب الحجم الكبير جداً",
         "avg_price": 7972775,  # 7,972,775 جنيه
         "avg_size_sqm": 151242.5,
         "avg_bedrooms": 0.5,
         "avg_bathrooms": 2.0,
-        "price_per_sqm": 53  # محسوب من avg_price / avg_size_sqm
+        "price_per_sqm": 53  # محسوب من avg_price / avg_size_sqm (52.72)
     },
     2: {
         "name": "قصور فاخرة متميزة",
@@ -139,6 +153,11 @@ def predict_segment(model, scaler, features):
     
     # Predict segment
     segment = model.predict(features_scaled)[0]
+    
+    # Ensure segment is a valid integer (0-3)
+    segment = int(segment)
+    if segment < 0 or segment > 3:
+        segment = 0  # Default to segment 0 if invalid
     
     return segment
 
@@ -270,13 +289,16 @@ def main():
         segment = predict_segment(model, scaler, features)
         
         # Store results in session state
-        st.session_state['segment'] = segment
+        st.session_state['segment'] = int(segment)  # Ensure it's an integer
         st.session_state['price'] = price
         st.session_state['size_sqm'] = size_sqm
         st.session_state['bedrooms'] = bedrooms
         st.session_state['bathrooms'] = bathrooms
         st.session_state['location'] = location
         st.session_state['features'] = features
+        
+        # Force rerun to update display
+        st.rerun()
     
     # Display results
     if 'segment' in st.session_state:
@@ -290,7 +312,7 @@ def main():
             st.markdown(f"""
             <div class="segment-box segment-{segment}">
                 <h2>📊 نتيجة التصنيف</h2>
-                <h3>الفئة: {segment_info['name']} ({segment_info['name_en']})</h3>
+                <h3>الفئة: {segment_info['name']} <span style="white-space: nowrap;">({segment_info['name_en']})</span></h3>
                 <p><strong>الوصف:</strong> {segment_info['description']}</p>
                 <p><strong>رقم الفئة:</strong> {segment}</p>
             </div>
